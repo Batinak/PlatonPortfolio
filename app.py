@@ -1,19 +1,23 @@
 from flask import Flask, render_template, request, session, jsonify
 import random
+import os
+
 app = Flask(__name__)
-app.secret_key = 'secret_key_for_session'
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
+
 TASKS = [
     {"word": "Девч_нка", "answer": "О"},
     {"word": "Медвеж_нок", "answer": "О"},
     {"word": "Крюч_к", "answer": "О"},
     {"word": "Ж_лтого", "answer": "Ё"},
     {"word": "Ш_пот", "answer": "Ё"},
-    {"word": "Ут_нок", "answer": "Ё"},
+    {"word": "Парч_вый", "answer": "О"},
     {"word": "Мыш_нок", "answer": "О"},
     {"word": "Обожж_нный", "answer": "Ё"},
     {"word": "Сраж_нный", "answer": "Ё"},
     {"word": "Реш_нный", "answer": "Ё"}
 ]
+
 @app.route('/')
 def index():
     session.clear()
@@ -29,10 +33,14 @@ def index():
                            current_num=1, 
                            total=len(TASKS),
                            score=0)
+
 @app.route('/check', methods=['POST'])
 def check_answer():
-    user_answer = request.json.get('answer')
+    data = request.get_json(silent=True) or {}
+    user_answer = data.get('answer')
     current_task = session.get('current')
+    if not current_task:
+        return jsonify({'error': 'No active task'}), 400
     
     is_correct = (user_answer == current_task['answer'])
     
@@ -55,17 +63,7 @@ def check_answer():
         'current_num': len(session['used']),
         'total': len(TASKS)
     })
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
-
-
-
-
-
-
-
-
-
-
-
-
+    port = int(os.getenv("PORT", 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
